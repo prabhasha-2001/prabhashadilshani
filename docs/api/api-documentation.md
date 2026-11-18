@@ -1,4 +1,4 @@
-# API Documentation — Prabhasha Nexus
+# API Documentation — Prabhashadilshani
 
 Base URL: `http://localhost:5000/api/v1`
 Interactive Swagger UI: `http://localhost:5000/api/docs`
@@ -173,7 +173,7 @@ Configurable via environment:
 # Login
 curl -X POST http://localhost:5000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@prabhashanexus.local","password":"ChangeThisPassword123!"}'
+  -d '{"email":"admin@prabhashadilshani.local","password":"ChangeThisPassword123!"}'
 
 # Public projects
 curl "http://localhost:5000/api/v1/projects?page=1&per_page=9&featured=true"

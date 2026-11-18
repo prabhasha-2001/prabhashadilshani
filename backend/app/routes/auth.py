@@ -87,7 +87,7 @@ def forgot_password():
         reset_url = f"{current_app.config['FRONTEND_URL']}/admin/login.html?reset_token={token}"
         send_email(
             payload["email"],
-            "Prabhasha Nexus password reset",
+            "Prabhashadilshani password reset",
             f"Use this link within 30 minutes to reset your password:\n\n{reset_url}\n",
         )
         current_app.logger.info("Password reset token generated for %s", payload["email"])

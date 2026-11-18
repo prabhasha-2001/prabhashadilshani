@@ -243,7 +243,7 @@
         ["Future improvements", project.future_improvements],
         ["Dataset", project.dataset_info]
       ].filter(([, value]) => value);
-      document.title = `${project.title} · Prabhasha Nexus`;
+      document.title = `${project.title} · Prabhashadilshani`;
       root.innerHTML = `
         <a class="back-link" href="projects.html">← All projects</a>
         <header class="detail-head">

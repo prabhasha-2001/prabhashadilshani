@@ -1692,7 +1692,7 @@
         </div>
       </div>`;
     $("#export-csv").addEventListener("click", () =>
-      api.download("/analytics/export.csv", "nexus-analytics.csv").catch((error) => toast(error.message || "Export failed", "error"))
+      api.download("/analytics/export.csv", "prabhashadilshani-analytics.csv").catch((error) => toast(error.message || "Export failed", "error"))
     );
   };
 

@@ -1,4 +1,4 @@
-# Database Design — Prabhasha Nexus
+# Database Design — Prabhashadilshani
 
 Engine: **MySQL 8** (production) / SQLite (local + tests)
 ORM: **SQLAlchemy** · Migrations: **Alembic (Flask-Migrate)**

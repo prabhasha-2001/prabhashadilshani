@@ -82,7 +82,7 @@ def _build_database_uri() -> str:
 
     instance_dir = BASE_DIR / "instance"
     instance_dir.mkdir(parents=True, exist_ok=True)
-    return f"sqlite:///{(instance_dir / 'nexus.sqlite').as_posix()}"
+    return f"sqlite:///{(instance_dir / 'prabhashadilshani.sqlite').as_posix()}"
 
 
 class Config:
@@ -140,7 +140,7 @@ class Config:
 
     # ---- Admin seed ----
     ADMIN_NAME = os.getenv("ADMIN_NAME", "Prabhasha Dilshani")
-    ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@prabhashanexus.local")
+    ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@prabhashadilshani.local")
     ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "ChangeThisPassword123!")
 
     # ---- AI ----
@@ -177,7 +177,7 @@ class Config:
     SMTP_PORT = env_int("SMTP_PORT", 587)
     SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
     SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-    MAIL_FROM = os.getenv("MAIL_FROM", "no-reply@prabhashanexus.local")
+    MAIL_FROM = os.getenv("MAIL_FROM", "no-reply@prabhashadilshani.local")
 
     # ---- Analytics ----
     ANALYTICS_ENABLED = env_bool("ANALYTICS_ENABLED", True)

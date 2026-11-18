@@ -29,7 +29,7 @@ def create_app(config_name: str | None = None) -> Flask:
             {
                 "success": True,
                 "data": {
-                    "name": "Prabhasha Nexus API",
+                    "name": "Prabhashadilshani API",
                     "version": "1.0.0",
                     "docs": "/api/docs",
                     "health": "/api/v1/health",

@@ -1,7 +1,7 @@
-# Development Roadmap — Prabhasha Nexus
+# Development Roadmap — Prabhashadilshani
 
 Each phase ends with verification, documentation updates, a focused commit and a push to
-`https://github.com/prabhasha-2001/prabhasha-nexus.git`.
+`https://github.com/prabhasha-2001/prabhashadilshani.git`.
 
 Status legend: DONE = implemented and verified; PLANNED = not yet implemented.
 

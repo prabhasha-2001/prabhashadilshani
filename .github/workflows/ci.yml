@@ -63,7 +63,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build backend image
-        run: docker build -f docker/backend.Dockerfile -t nexus-backend:ci .
+        run: docker build -f docker/backend.Dockerfile -t prabhashadilshani-backend:ci .
 
       - name: Build frontend image
-        run: docker build -f docker/frontend.Dockerfile -t nexus-frontend:ci .
+        run: docker build -f docker/frontend.Dockerfile -t prabhashadilshani-frontend:ci .

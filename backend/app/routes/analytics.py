@@ -124,7 +124,7 @@ def analytics_export():
         payload,
         mimetype="text/csv",
         headers={
-            "Content-Disposition": f"attachment; filename=nexus-analytics-{days}d.csv"
+            "Content-Disposition": f"attachment; filename=prabhashadilshani-analytics-{days}d.csv"
         },
     )
 

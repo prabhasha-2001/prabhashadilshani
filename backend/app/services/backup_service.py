@@ -65,7 +65,7 @@ def create_backup(label: str | None = None) -> dict:
     backup_dir = Path(current_app.config["BACKUP_DIR"])
     backup_dir.mkdir(parents=True, exist_ok=True)
     timestamp = utcnow().strftime("%Y%m%d-%H%M%S")
-    filename = f"nexus-backup-{label + '-' if label else ''}{timestamp}.json"
+    filename = f"prabhashadilshani-backup-{label + '-' if label else ''}{timestamp}.json"
     path = backup_dir / filename
 
     payload = {"generated_at": utcnow().isoformat(), "tables": {}}

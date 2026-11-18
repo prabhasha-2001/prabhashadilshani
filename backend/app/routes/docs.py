@@ -441,7 +441,7 @@ def _build_spec() -> dict:
     return {
         "openapi": "3.0.3",
         "info": {
-            "title": "Prabhasha Nexus API",
+            "title": "Prabhashadilshani API",
             "version": "1.0.0",
             "description": (
                 "AI-Powered Personal Portfolio & Intelligence Management Platform API. "
@@ -486,7 +486,7 @@ def swagger_ui():
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Prabhasha Nexus API Docs</title>
+  <title>Prabhashadilshani API Docs</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
   <style>body{margin:0;background:#0b1020} .topbar{display:none}</style>
 </head>

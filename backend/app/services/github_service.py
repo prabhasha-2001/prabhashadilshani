@@ -13,7 +13,7 @@ _CACHE: dict[str, dict] = {}
 def _headers() -> dict:
     headers = {
         "Accept": "application/vnd.github+json",
-        "User-Agent": "PrabhashaNexus/1.0",
+        "User-Agent": "Prabhashadilshani/1.0",
         "X-GitHub-Api-Version": "2022-11-28",
     }
     token = current_app.config.get("GITHUB_TOKEN")

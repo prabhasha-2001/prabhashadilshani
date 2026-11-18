@@ -175,9 +175,9 @@
     header.className = "site-header";
     header.innerHTML = `
       <div class="container nav-shell">
-        <a class="brand" href="index.html" aria-label="Prabhasha Nexus home">
-          <span class="brand-mark">PN</span>
-          <span class="brand-text"><strong>Prabhasha</strong><small>Nexus</small></span>
+        <a class="brand" href="index.html" aria-label="Prabhashadilshani home">
+          <span class="brand-mark">PD</span>
+          <span class="brand-text"><strong>Prabhasha</strong><small>Dilshani</small></span>
         </a>
         <nav class="site-nav" id="site-nav" aria-label="Primary navigation">
           ${navItems.map(([key, href, label]) => `<a href="${href}" class="${key === activePage ? "active" : ""}">${label}</a>`).join("")}
@@ -196,7 +196,7 @@
     footer.innerHTML = `
       <div class="container footer-grid">
         <div>
-          <a class="brand" href="index.html"><span class="brand-mark">PN</span><span class="brand-text"><strong>Prabhasha</strong><small>Nexus</small></span></a>
+          <a class="brand" href="index.html"><span class="brand-mark">PD</span><span class="brand-text"><strong>Prabhasha</strong><small>Dilshani</small></span></a>
           <p class="muted footer-blurb">${escapeHtml(truncate(profile?.summary || fallback.summary, 170))}</p>
         </div>
         <div>

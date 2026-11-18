@@ -1,8 +1,8 @@
-# Prabhasha Nexus
+# Prabhashadilshani
 
 **AI-Powered Personal Portfolio & Intelligence Management Platform**
 
-Prabhasha Nexus is a full-stack portfolio and content platform for **Muwagamage Tharushi Prabhasha Dilshani** — AI/ML Engineer, Data Science Enthusiast, Python Developer and Generative AI Developer.
+Prabhashadilshani is a full-stack portfolio and content platform for **Muwagamage Tharushi Prabhasha Dilshani** — AI/ML Engineer, Data Science Enthusiast, Python Developer and Generative AI Developer.
 
 It combines a public portfolio, a role-based admin dashboard, a versioned Flask REST API, a MySQL/SQLite database, a grounded AI assistant, privacy-conscious analytics, GitHub integration and n8n workflow automation. Portfolio facts are seeded only from verified owner data; unverified features degrade gracefully instead of inventing content.
 
@@ -67,7 +67,7 @@ No frontend build step or npm dependency is required.
 ## Project Structure
 
 ```
-prabhasha-nexus/
+prabhashadilshani/
 ├── frontend/
 │   ├── index.html, about.html, projects.html, project.html
 │   ├── research.html, certificates.html, blog.html, contact.html
@@ -111,8 +111,8 @@ prabhasha-nexus/
 ### 1. Clone and configure
 
 ```powershell
-git clone https://github.com/prabhasha-2001/prabhasha-nexus.git
-cd prabhasha-nexus
+git clone https://github.com/prabhasha-2001/prabhashadilshani.git
+cd prabhashadilshani
 Copy-Item .env.example .env
 ```
 
@@ -169,7 +169,7 @@ docker compose ps
 
 Services:
 - `db` — MySQL 8 with the `mysql_data` volume
-- `backend` — Gunicorn on port 5000, data volume `nexus_data` (waits for DB, runs migrations, optional seed)
+- `backend` — Gunicorn on port 5000, data volume `prabhashadilshani_data` (waits for DB, runs migrations, optional seed)
 - `frontend` — Nginx on port 8080, proxying `/api/` and `/uploads/` to the backend
 
 Compose builds the MySQL URL safely from `DB_*` components in the app config (so special characters in `MYSQL_PASSWORD` are handled correctly) and starts the backend only after DB readiness/migrations succeed. `SEED_ON_START=true` seeds once idempotently; set it to `false` after the first successful deployment.

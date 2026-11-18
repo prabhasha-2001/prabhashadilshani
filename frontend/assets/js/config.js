@@ -9,7 +9,7 @@ function resolveApiBase() {
 
 window.PRABHASHA_CONFIG = {
   apiBase: resolveApiBase(),
-  siteName: "Prabhasha Nexus",
+  siteName: "Prabhashadilshani",
   ownerFallback: {
     full_name: "Muwagamage Tharushi Prabhasha Dilshani",
     professional_title: "AI/ML Engineer · Data Science Enthusiast · Python Developer",

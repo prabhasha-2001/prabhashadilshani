@@ -531,7 +531,7 @@ def _workflows() -> list[AutomationWorkflow]:
 
 def _seed_settings() -> None:
     defaults = [
-        ("site_name", "Prabhasha Nexus", "general", True),
+        ("site_name", "Prabhashadilshani", "general", True),
         ("site_tagline", "AI-Powered Portfolio & Intelligence Management Platform", "general", True),
         ("owner_name", "Muwagamage Tharushi Prabhasha Dilshani", "general", True),
         ("contact_email", "mtprabhashadilshani2001@gmail.com", "general", True),

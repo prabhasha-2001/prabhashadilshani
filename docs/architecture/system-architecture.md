@@ -1,8 +1,8 @@
-# System Architecture — Prabhasha Nexus
+# System Architecture — Prabhashadilshani
 
 ## 1. Overview
 
-Prabhasha Nexus is a modular monolith:
+Prabhashadilshani is a modular monolith:
 
 - **Static frontend** (HTML/CSS/vanilla JavaScript) served independently or through Nginx.
 - **Flask REST API** (application factory + blueprints) exposing versioned `/api/v1/` endpoints.

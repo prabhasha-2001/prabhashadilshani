@@ -16,7 +16,7 @@ def test_editor_can_manage_projects(client, role_headers):
         "/api/v1/admin/projects",
         headers=editor,
         json={
-            "title": "Nexus Test Project",
+            "title": "Prabhashadilshani Test Project",
             "short_description": "A project created in the test suite.",
             "status": "published",
             "technologies": ["Python", "Flask"],
@@ -27,12 +27,12 @@ def test_editor_can_manage_projects(client, role_headers):
     )
     assert response.status_code == 201
     project = response.get_json()["data"]
-    assert project["slug"] == "nexus-test-project"
+    assert project["slug"] == "prabhashadilshani-test-project"
     assert project["technologies"] == ["Python", "Flask"]
     assert project["metrics"][0]["value"] == "91.5"
 
     detail = client.get(f"/api/v1/projects/{project['slug']}").get_json()["data"]
-    assert detail["title"] == "Nexus Test Project"
+    assert detail["title"] == "Prabhashadilshani Test Project"
 
 
 def test_project_slug_is_unique(client, auth):

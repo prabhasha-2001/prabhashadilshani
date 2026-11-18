@@ -1,4 +1,4 @@
-# Deployment Guide — Prabhasha Nexus
+# Deployment Guide — Prabhashadilshani
 
 ## 1. Environments
 
@@ -67,7 +67,7 @@ Services:
 | Service | Image / build | Port | Persistent volume |
 |---------|---------------|------|-------------------|
 | `db` | `mysql:8.0` | internal 3306 | `mysql_data` → `/var/lib/mysql` |
-| `backend` | `docker/backend.Dockerfile` (Gunicorn) | 5000 | `nexus_data` → `/data` |
+| `backend` | `docker/backend.Dockerfile` (Gunicorn) | 5000 | `prabhashadilshani_data` → `/data` |
 | `frontend` | `docker/frontend.Dockerfile` (Nginx) | 8080 | none (static image) |
 
 URLs: frontend `http://localhost:8080`, backend `http://localhost:5000`,
@@ -76,7 +76,7 @@ Swagger UI `http://localhost:5000/api/docs`.
 ### Persistent storage
 
 Uploads, backups, knowledge documents and the retrieval index live under `/data` in the
-backend container and are backed by the `nexus_data` volume:
+backend container and are backed by the `prabhashadilshani_data` volume:
 
 ```
 UPLOAD_DIR=/data/uploads
@@ -87,7 +87,7 @@ FAISS_INDEX_DIR=/data/index
 
 `S3_*` settings are reserved for a future storage adapter; the current release stores
 media on local disk only. On hosts with ephemeral disks, mount a persistent disk or copy
-`nexus_data` off the host regularly.
+`prabhashadilshani_data` off the host regularly.
 
 ## 4. Render Deployment
 
@@ -169,8 +169,8 @@ The admin API also exposes `POST /api/v1/admin/backup`.
 MySQL logical dump:
 
 ```bash
-mysqldump -h HOST -u USER -p --single-transaction --routines --triggers DB > nexus.sql
-mysql -h HOST -u USER -p DB < nexus.sql
+mysqldump -h HOST -u USER -p --single-transaction --routines --triggers DB > prabhashadilshani.sql
+mysql -h HOST -u USER -p DB < prabhashadilshani.sql
 ```
 
 Store dumps encrypted and outside the repository.
@@ -209,7 +209,7 @@ Add deployment secrets in the hosting provider, never in the workflow file.
 | Backend restarts at boot | database unavailable or migration failed | check `docker compose logs db` and `docker compose logs backend` (DB wait/migration errors) |
 | `Can't connect to MySQL server on '...@db'` / bad hostname | password with special chars interpolated into URL | use `DB_*` components / Compose `MYSQL_*` (app builds URL via `SQLAlchemy URL.create()`); avoid raw unescaped `DATABASE_URL` with `@:/` in password |
 | 502 from Nginx | backend not healthy | check `docker compose logs backend` and `/api/v1/health` |
-| Uploads lost after deploy | ephemeral disk | mount persistent disk; keep `nexus_data` |
+| Uploads lost after deploy | ephemeral disk | mount persistent disk; keep `prabhashadilshani_data` |
 | AI answers generic | no LLM key | set `GROQ_API_KEY` or `OPENROUTER_API_KEY` |
 | AI retrieval is keyword-based | no embedding model | install `requirements-ai.txt` and rebuild index |
 | GitHub data stale | cache TTL | `POST /api/v1/admin/github/refresh` |
