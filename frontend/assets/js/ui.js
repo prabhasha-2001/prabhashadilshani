@@ -29,7 +29,7 @@
   }
 
   function initials(name) {
-    return String(name || "PN")
+    return String(name || "PD")
       .split(/\s+/)
       .filter(Boolean)
       .slice(0, 2)

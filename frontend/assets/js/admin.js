@@ -175,7 +175,7 @@
     $("#app-view").hidden = false;
     $("#user-name").textContent = currentUser.name || "Admin";
     $("#user-role").textContent = currentUser.role || "admin";
-    $("#user-initials").textContent = initials(currentUser.name || "PN");
+    $("#user-initials").textContent = initials(currentUser.name || "PD");
     renderNav();
     navigate();
   }

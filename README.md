@@ -167,10 +167,10 @@ docker compose up -d --build
 docker compose ps
 ```
 
-Services:
-- `db` — MySQL 8 with the `mysql_data` volume
-- `backend` — Gunicorn on port 5000, data volume `prabhashadilshani_data` (waits for DB, runs migrations, optional seed)
-- `frontend` — Nginx on port 8080, proxying `/api/` and `/uploads/` to the backend
+Services (project `prabhashadilshani`, network `prabhashadilshani-net`):
+- `db` — MySQL 8 (`mysql:8.0`), container `prabhashadilshani-db`, volume `prabhashadilshani_mysql_data`
+- `backend` — image `prabhashadilshani-backend`, container `prabhashadilshani-backend`, Gunicorn on port 5000, volume `prabhashadilshani_data` (waits for DB, runs migrations, optional seed)
+- `frontend` — image `prabhashadilshani-frontend`, container `prabhashadilshani-frontend`, Nginx on port 8080, proxying `/api/` and `/uploads/` to the backend
 
 Compose builds the MySQL URL safely from `DB_*` components in the app config (so special characters in `MYSQL_PASSWORD` are handled correctly) and starts the backend only after DB readiness/migrations succeed. `SEED_ON_START=true` seeds once idempotently; set it to `false` after the first successful deployment.
 

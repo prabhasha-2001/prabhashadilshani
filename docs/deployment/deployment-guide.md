@@ -64,11 +64,13 @@ docker compose exec backend flask --app wsgi.py backup create
 
 Services:
 
-| Service | Image / build | Port | Persistent volume |
-|---------|---------------|------|-------------------|
-| `db` | `mysql:8.0` | internal 3306 | `mysql_data` → `/var/lib/mysql` |
-| `backend` | `docker/backend.Dockerfile` (Gunicorn) | 5000 | `prabhashadilshani_data` → `/data` |
-| `frontend` | `docker/frontend.Dockerfile` (Nginx) | 8080 | none (static image) |
+Compose project/network: `prabhashadilshani` / `prabhashadilshani-net`.
+
+| Service | Image / build | Container | Port | Persistent volume |
+|---------|---------------|-----------|------|-------------------|
+| `db` | `mysql:8.0` | `prabhashadilshani-db` | internal 3306 | `prabhashadilshani_mysql_data` → `/var/lib/mysql` |
+| `backend` | `prabhashadilshani-backend` (`docker/backend.Dockerfile`, Gunicorn) | `prabhashadilshani-backend` | 5000 | `prabhashadilshani_data` → `/data` |
+| `frontend` | `prabhashadilshani-frontend` (`docker/frontend.Dockerfile`, Nginx) | `prabhashadilshani-frontend` | 8080 | none (static image) |
 
 URLs: frontend `http://localhost:8080`, backend `http://localhost:5000`,
 Swagger UI `http://localhost:5000/api/docs`.
@@ -76,7 +78,8 @@ Swagger UI `http://localhost:5000/api/docs`.
 ### Persistent storage
 
 Uploads, backups, knowledge documents and the retrieval index live under `/data` in the
-backend container and are backed by the `prabhashadilshani_data` volume:
+backend container and are backed by the `prabhashadilshani_data` volume (MySQL data uses
+`prabhashadilshani_mysql_data`):
 
 ```
 UPLOAD_DIR=/data/uploads
