@@ -209,6 +209,7 @@
           ${github ? `<a href="${escapeHtml(github)}" target="_blank" rel="noopener">GitHub ↗</a>` : ""}
           ${email ? `<a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a>` : ""}
           <a href="contact.html">Contact form</a>
+          <a href="/admin/">Admin Login</a>
         </div>
       </div>
       <div class="container footer-bottom">
