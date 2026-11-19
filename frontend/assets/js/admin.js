@@ -3,12 +3,64 @@
 
   const ui = window.nexusUI;
   const rawApi = window.nexusApi;
+
+  class NavigationAbortError extends Error {
+    constructor() {
+      super("Navigation changed");
+      this.name = "NavigationAbortError";
+    }
+  }
+
+  let currentUser = null;
+  let activeRoute = "dashboard";
+  let navigationToken = 0;
+  let navigationController = null;
+  let activeCleanup = null;
+
+  function isAbortError(error) {
+    return error instanceof NavigationAbortError || error?.name === "AbortError" || error?.name === "NavigationAbortError";
+  }
+
+  function friendlyNetworkError(error) {
+    if (error instanceof TypeError) {
+      const networkError = new Error("Unable to reach the server. Check your connection and try again.");
+      networkError.name = "NetworkError";
+      return networkError;
+    }
+    return error;
+  }
+
+  function guardedGet(path, options = {}) {
+    const token = navigationToken;
+    const requestOptions = { ...options, auth: true };
+    if (navigationController && !requestOptions.signal) requestOptions.signal = navigationController.signal;
+    return rawApi.get(path, requestOptions).then(
+      (result) => {
+        if (token !== navigationToken) throw new NavigationAbortError();
+        return result;
+      },
+      (error) => {
+        if (token !== navigationToken || error?.name === "AbortError") throw new NavigationAbortError();
+        throw friendlyNetworkError(error);
+      }
+    );
+  }
+
   const api = {
     ...rawApi,
-    get: (path, options) => rawApi.get(path, { auth: true, ...options }),
-    post: (path, body, options) => rawApi.post(path, body, { auth: true, ...options }),
-    put: (path, body, options) => rawApi.put(path, body, { auth: true, ...options }),
-    del: (path, options) => rawApi.del(path, { auth: true, ...options })
+    get: guardedGet,
+    post: (path, body, options) =>
+      rawApi.post(path, body, { auth: true, ...options }).catch((error) => {
+        throw friendlyNetworkError(error);
+      }),
+    put: (path, body, options) =>
+      rawApi.put(path, body, { auth: true, ...options }).catch((error) => {
+        throw friendlyNetworkError(error);
+      }),
+    del: (path, options) =>
+      rawApi.del(path, { auth: true, ...options }).catch((error) => {
+        throw friendlyNetworkError(error);
+      })
   };
   const { $, $$, escapeHtml: esc, formatDate, initials, truncate, toast } = ui;
 
@@ -17,9 +69,6 @@
   const baseOrigin = new URL(api.API_BASE, window.location.href).origin;
   const canWrite = () => currentUser && currentUser.role !== "viewer";
   const canAdmin = () => currentUser && currentUser.role === "admin";
-
-  let currentUser = null;
-  let activeRoute = "dashboard";
 
   const NAV = [
     {
@@ -160,12 +209,23 @@
     $("#app-view").hidden = true;
   }
 
+  function setPasswordVisibility(show) {
+    const input = $("#login-password");
+    const button = $("#password-toggle");
+    input.type = show ? "text" : "password";
+    button.setAttribute("aria-pressed", String(show));
+    const label = show ? "Hide password" : "Show password";
+    button.setAttribute("aria-label", label);
+    button.title = label;
+  }
+
   function showLogin() {
     hideAll();
     $("#login-view").hidden = false;
     $("#login-error").hidden = true;
     const form = $("#login-form");
     form.reset();
+    setPasswordVisibility(false);
     $("#login-submit").disabled = false;
     form.querySelector("input[name='email']").focus();
   }
@@ -177,7 +237,7 @@
     $("#user-role").textContent = currentUser.role || "admin";
     $("#user-initials").textContent = initials(currentUser.name || "PD");
     renderNav();
-    navigate();
+    await navigate();
   }
 
   function renderNav() {
@@ -202,6 +262,16 @@
   }
 
   function navigate() {
+    if (activeCleanup) {
+      activeCleanup();
+      activeCleanup = null;
+    }
+    closeModal();
+    navigationToken += 1;
+    const token = navigationToken;
+    if (navigationController) navigationController.abort();
+    navigationController = typeof AbortController === "function" ? new AbortController() : null;
+
     activeRoute = currentRouteKey();
     view.onclick = null;
     $$(".nav-link").forEach((link) => link.classList.toggle("active", link.dataset.route === activeRoute));
@@ -210,10 +280,22 @@
     $("#page-subtitle").textContent = meta.group;
     $("#sidebar").classList.remove("open");
     $("#sidebar-scrim").classList.remove("open");
+    $("#refresh-view").disabled = true;
+    view.setAttribute("aria-busy", "true");
+    view.innerHTML = `<div class="view-loading"><div class="stat-grid">${ui.skeletonCards(3)}</div></div>`;
+
     const renderer = ROUTES[activeRoute] || ROUTES.dashboard;
-    Promise.resolve(renderer()).catch((error) => {
-      view.innerHTML = `<div class="empty"><strong>Something went wrong</strong>${esc(error.message || "Unable to render view")}</div>`;
-    });
+    return Promise.resolve()
+      .then(() => renderer())
+      .catch((error) => {
+        if (token !== navigationToken || isAbortError(error)) return;
+        view.innerHTML = `<div class="empty"><strong>Something went wrong</strong>${esc(error.message || "Unable to render view")}</div>`;
+      })
+      .finally(() => {
+        if (token !== navigationToken) return;
+        view.setAttribute("aria-busy", "false");
+        $("#refresh-view").disabled = false;
+      });
   }
 
   /* ---------------------------------------------------------------- modal */
@@ -515,6 +597,7 @@
       );
 
       let timer = null;
+      activeCleanup = () => clearTimeout(timer);
       $("#resource-search").addEventListener("input", (event) => {
         clearTimeout(timer);
         timer = setTimeout(() => {
@@ -2280,6 +2363,10 @@
   };
 
   /* ---------------------------------------------------------------- login / boot */
+  $("#password-toggle").addEventListener("click", () => {
+    setPasswordVisibility($("#login-password").type === "password");
+  });
+
   $("#login-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.target;
@@ -2290,7 +2377,8 @@
     try {
       const data = await api.login(form.elements.email.value.trim(), form.elements.password.value);
       currentUser = data.user;
-      toast(`Welcome back, ${currentUser.name.split(" ")[0]}`, "success");
+      const firstName = (currentUser.name || "Admin").split(" ")[0];
+      toast(`Welcome back, ${firstName}`, "success");
       await showApp();
     } catch (error) {
       errorBox.textContent = error.message || "Sign-in failed";
@@ -2300,10 +2388,25 @@
   });
 
   $("#sign-out").addEventListener("click", async () => {
-    await api.logout();
+    const button = $("#sign-out");
+    button.disabled = true;
+    navigationToken += 1;
+    if (navigationController) navigationController.abort();
+    navigationController = null;
+    if (activeCleanup) {
+      activeCleanup();
+      activeCleanup = null;
+    }
+    try {
+      await api.logout();
+    } catch (_error) {
+      api.clearSession();
+    }
     currentUser = null;
+    history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
     showLogin();
     toast("Signed out", "success");
+    button.disabled = false;
   });
 
   $("#theme-toggle").addEventListener("click", () => {
@@ -2328,9 +2431,17 @@
     if (!$("#app-view").hidden) navigate();
   });
   window.addEventListener("nexus:unauthorized", () => {
+    const wasSignedIn = $("#login-view").hidden;
+    navigationToken += 1;
+    if (navigationController) navigationController.abort();
+    navigationController = null;
+    if (activeCleanup) {
+      activeCleanup();
+      activeCleanup = null;
+    }
     currentUser = null;
     showLogin();
-    toast("Session expired — sign in again", "warning");
+    if (wasSignedIn) toast("Session expired — sign in again", "warning");
   });
 
   modalRoot.addEventListener("click", (event) => {
