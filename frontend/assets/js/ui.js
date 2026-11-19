@@ -2,6 +2,7 @@
   const api = window.nexusApi;
   const config = window.PRABHASHA_CONFIG || {};
   const fallback = config.ownerFallback || {};
+  let profileResumeUrl = "";
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -170,6 +171,11 @@
     const github = profile?.github_url || fallback.github_url;
     const linkedin = profile?.linkedin_url || fallback.linkedin_url;
     const activePage = document.body.dataset.page || "home";
+    profileResumeUrl = config.cacheBustUrl
+      ? config.cacheBustUrl(profile?.resume_url, profile?.updated_at)
+      : config.mediaUrl
+        ? config.mediaUrl(profile?.resume_url)
+        : profile?.resume_url || "";
 
     const header = document.createElement("header");
     header.className = "site-header";
@@ -220,7 +226,7 @@
     $("[data-year]").textContent = new Date().getFullYear();
 
     $("[data-theme-toggle]").addEventListener("click", toggleTheme);
-    $("[data-resume]").addEventListener("click", downloadResume);
+    $$("[data-resume]").forEach((button) => button.addEventListener("click", downloadResume));
     const menu = $(".menu-btn");
     const nav = $("#site-nav");
     menu?.addEventListener("click", () => {
@@ -235,6 +241,11 @@
 
   async function downloadResume() {
     try {
+      if (profileResumeUrl) {
+        trackEvent("cv_download", { content_type: "resume", path: "/resume/download" });
+        window.open(profileResumeUrl, "_blank", "noopener");
+        return;
+      }
       const result = await api.get("/resumes");
       const resumes = result.data || [];
       if (!resumes.length) {

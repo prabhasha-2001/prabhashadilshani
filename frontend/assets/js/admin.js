@@ -906,7 +906,9 @@
   ROUTES.profile = async function profile() {
     view.innerHTML = `<div class="empty"><strong>Loading profile…</strong></div>`;
     const result = await api.get("/admin/profile");
-    const data = result.data || {};
+    let data = result.data || {};
+    const MAX_RESUME_BYTES = 5 * 1024 * 1024;
+    const RESUME_MIME_TYPES = new Set(["application/pdf", "application/x-pdf", "application/octet-stream"]);
     const fields = [
       { name: "full_name", label: "Full name", full: true },
       { name: "professional_title", label: "Professional title", full: true },
@@ -918,13 +920,35 @@
       { name: "linkedin_url", label: "LinkedIn URL", type: "url" },
       { name: "website_url", label: "Website URL", type: "url" },
       { name: "avatar_url", label: "Avatar URL", type: "url" },
-      { name: "resume_url", label: "Resume URL", type: "url" },
       { name: "interests", label: "Interests", type: "tags" },
       { name: "languages", label: "Languages", type: "tags" },
       { name: "summary", label: "Professional summary", type: "textarea", full: true, rows: 3 },
       { name: "about", label: "About", type: "textarea", full: true, rows: 7 },
       { name: "career_goals", label: "Career goals", type: "textarea", full: true, rows: 4 }
     ];
+
+    function resumeFilename(url) {
+      const clean = String(url || "").split(/[?#]/)[0];
+      const last = clean.split("/").pop() || "";
+      try {
+        return decodeURIComponent(last) || "Resume.pdf";
+      } catch (_error) {
+        return last || "Resume.pdf";
+      }
+    }
+
+    function resumeMediaUrl(url, version) {
+      const resolved = assetUrl(url);
+      if (!resolved || !resolved.includes("/uploads/") || resolved.includes("?")) return resolved;
+      return `${resolved}?v=${encodeURIComponent(String(version || ""))}`;
+    }
+
+    function resumeCurrentHtml(url, version) {
+      const resumeSafeUrl = resumeMediaUrl(url, version);
+      if (!resumeSafeUrl) return `<span class="resume-current-name">None uploaded yet</span>`;
+      return `<span class="resume-current-name">Current: ${esc(resumeFilename(resumeSafeUrl))}</span>`;
+    }
+
     view.innerHTML = `
       <div class="view-head"><div><h1>Profile</h1><p>Public identity, links and narrative. Only verified details should be published.</p></div>
         <div class="view-actions"><a class="btn btn-ghost btn-sm" href="../about.html" target="_blank" rel="noopener">Preview about page ↗</a></div>
@@ -935,6 +959,24 @@
           <form class="profile-form" id="profile-form">
             <div class="form-error" id="profile-error"></div>
             ${fieldsHtml(fields, data)}
+            <div class="form-field full resume-upload">
+              <label class="resume-section-title">Resume / CV</label>
+              <div class="resume-upload-current" id="resume-current">${resumeCurrentHtml(data.resume_url, data.updated_at)}</div>
+              <div class="resume-file-row">
+                <div class="resume-file-wrap">
+                  <input type="file" id="resume-file-input" class="resume-file-input" accept=".pdf,application/pdf" aria-label="Choose PDF File" />
+                  <button class="btn btn-ghost btn-sm" type="button" id="resume-choose-button" tabindex="-1">Choose PDF File</button>
+                </div>
+                <span class="resume-selected-name" id="resume-selected-name">No PDF selected</span>
+              </div>
+              <div class="resume-action-row">
+                <button class="btn btn-primary btn-sm" type="button" id="resume-upload-button" ${canWrite() ? "" : "disabled"}>Upload Resume</button>
+                <button class="btn btn-ghost btn-sm" type="button" id="resume-preview-button" ${data.resume_url ? "" : "disabled"}>Preview Resume</button>
+                <button class="btn btn-ghost btn-sm" type="button" id="resume-download-button" ${data.resume_url ? "" : "disabled"}>Download Resume</button>
+              </div>
+              <div class="resume-progress" id="resume-progress" hidden aria-hidden="true"><span id="resume-progress-bar"></span></div>
+              <span class="resume-upload-status" id="resume-upload-status" role="status" aria-live="polite">${data.resume_url ? "Choose a PDF to replace the current resume. " : ""}PDF only · maximum 5 MB</span>
+            </div>
             <div style="margin-top:1rem;display:flex;justify-content:flex-end">
               <button class="btn btn-primary btn-sm" type="submit" ${canWrite() ? "" : "disabled"}>Save profile</button>
             </div>
@@ -942,6 +984,127 @@
         </div>
       </div>`;
     const form = $("#profile-form");
+    const resumeFileInput = $("#resume-file-input");
+    const resumeChooseButton = $("#resume-choose-button");
+    const resumeUploadButton = $("#resume-upload-button");
+    const resumePreviewButton = $("#resume-preview-button");
+    const resumeDownloadButton = $("#resume-download-button");
+    const resumeSelectedName = $("#resume-selected-name");
+    const resumeCurrent = $("#resume-current");
+    const resumeStatus = $("#resume-upload-status");
+    const resumeProgress = $("#resume-progress");
+    const resumeProgressBar = $("#resume-progress-bar");
+    function setResumeStatus(message, tone) {
+      resumeStatus.textContent = message;
+      resumeStatus.className = `resume-upload-status${tone ? ` ${tone}` : ""}`;
+    }
+
+    function currentResumeUrl() {
+      return resumeMediaUrl(data.resume_url, data.updated_at);
+    }
+
+    function showResumeCurrent(url, version) {
+      resumeCurrent.innerHTML = resumeCurrentHtml(url, version);
+      const hasResume = Boolean(resumeMediaUrl(url, version));
+      resumePreviewButton.disabled = !hasResume;
+      resumeDownloadButton.disabled = !hasResume;
+    }
+
+    function setResumeProgress(percent, visible = true) {
+      resumeProgress.hidden = !visible;
+      resumeProgress.setAttribute("aria-hidden", visible ? "false" : "true");
+      resumeProgressBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+    }
+
+    function resumeValidationError(file) {
+      if (!file) return "Choose a PDF first.";
+      if (file.size > MAX_RESUME_BYTES) return "Resume must be 5 MB or smaller.";
+      if (file.size === 0) return "The selected file is empty.";
+      const extension = (file.name.split(".").pop() || "").toLowerCase();
+      if (extension !== "pdf") return "Only PDF files are allowed.";
+      if (file.type && !RESUME_MIME_TYPES.has(file.type)) return "Only PDF files are allowed.";
+      return "";
+    }
+
+    resumeChooseButton.addEventListener("click", () => resumeFileInput.click());
+
+    resumeFileInput.addEventListener("change", () => {
+      const file = resumeFileInput.files[0];
+      const error = resumeValidationError(file);
+      setResumeProgress(0, false);
+      if (error) {
+        resumeFileInput.value = "";
+        resumeSelectedName.textContent = "No PDF selected";
+        resumeFileInput.setAttribute("aria-invalid", "true");
+        setResumeStatus(error, "error");
+        return;
+      }
+      resumeFileInput.removeAttribute("aria-invalid");
+      resumeSelectedName.textContent = file.name;
+      setResumeStatus(`${file.name} · ${bytes(file.size)} · ready to upload`, "");
+    });
+
+    resumePreviewButton.addEventListener("click", () => {
+      const url = currentResumeUrl();
+      if (url) window.open(url, "_blank", "noopener");
+    });
+
+    resumeDownloadButton.addEventListener("click", () => {
+      const url = currentResumeUrl();
+      if (!url) return;
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = resumeFilename(url);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    });
+
+    resumeUploadButton.addEventListener("click", async () => {
+      const file = resumeFileInput.files[0];
+      const error = resumeValidationError(file);
+      if (error) {
+        resumeFileInput.setAttribute("aria-invalid", "true");
+        setResumeStatus(error, "error");
+        return;
+      }
+      resumeUploadButton.disabled = true;
+      setResumeProgress(0);
+      setResumeStatus("Uploading… 0%", "");
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const result = await api.upload("/admin/profile/resume", formData, {
+          auth: true,
+          onProgress: (percent) => {
+            setResumeProgress(percent);
+            setResumeStatus(`Uploading… ${percent}%`, "");
+          }
+        });
+        const uploadedUrl = result.data?.url || result.data?.profile?.resume_url || "";
+        if (!uploadedUrl) throw new Error("Upload succeeded but no resume URL was returned.");
+        const refreshed = await api.get("/admin/profile");
+        data = refreshed.data || data;
+        if (!data.resume_url) data.resume_url = uploadedUrl;
+        showResumeCurrent(data.resume_url, data.updated_at);
+        resumeFileInput.value = "";
+        resumeSelectedName.textContent = "No PDF selected";
+        resumeFileInput.removeAttribute("aria-invalid");
+        setResumeProgress(100);
+        setResumeStatus(
+          `Uploaded ${result.data?.filename || resumeFilename(data.resume_url)} and published to the public profile.`,
+          "success"
+        );
+        toast("Resume published", "success");
+        setTimeout(() => setResumeProgress(0, false), 700);
+      } catch (error) {
+        setResumeProgress(0, false);
+        setResumeStatus(error.message || "Upload failed", "error");
+      } finally {
+        resumeUploadButton.disabled = false;
+      }
+    });
+
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const errorBox = $("#profile-error");

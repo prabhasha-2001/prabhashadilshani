@@ -294,6 +294,21 @@
 .kv dd { margin: 0; word-break: break-word; }
 .mono { font-family: ui-monospace, "Cascadia Code", monospace; font-size: 0.78rem; }
 .chip-set { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.resume-upload { padding: 0.75rem; border: 1px dashed var(--line-strong); border-radius: 10px; background: var(--bg-soft); }
+.resume-section-title { color: var(--text) !important; font-size: 0.85rem !important; font-weight: 700 !important; letter-spacing: 0.01em; }
+.resume-upload-current { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.72rem; color: var(--muted); word-break: break-all; }
+.resume-file-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+.resume-file-wrap { position: relative; display: inline-flex; flex: 0 0 auto; }
+.resume-file-input { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.resume-file-input:focus-visible + .btn { outline: 2px solid var(--accent); outline-offset: 2px; }
+.resume-selected-name { font-size: 0.72rem; color: var(--muted); word-break: break-all; }
+.resume-action-row { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.resume-progress { width: 100%; height: 6px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel-2); overflow: hidden; }
+.resume-progress[hidden] { display: none; }
+.resume-progress span { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width 0.16s ease; }
+.resume-upload-status { flex-basis: 100%; font-size: 0.7rem; color: var(--muted); }
+.resume-upload-status.success { color: var(--accent); }
+.resume-upload-status.error { color: var(--danger); }
 
 @media (max-width: 1050px) {
   .split { grid-template-columns: 1fr; }
@@ -320,6 +335,9 @@
   .modal { margin: 1vh auto; max-height: 98vh; }
   .filter-bar .result-count { display: none; }
   .profile-form .field-grid { grid-template-columns: 1fr; }
+  .resume-upload { align-items: stretch; }
+  .resume-file-wrap, .resume-action-row { width: 100%; }
+  .resume-upload .btn { width: 100%; }
   .bars { gap: 2px; height: 110px; }
   .source-row .source-bar { max-width: 42px; }
   .activity-list time { font-size: 0.62rem; }

@@ -83,6 +83,63 @@
     return { data: payload ? payload.data : null, meta: payload ? payload.meta : null, status: response.status };
   }
 
+  function upload(path, formData, options = {}) {
+    const { onProgress, auth = true, signal } = options;
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", `${API_BASE}${path}`);
+      if (auth) {
+        const stored = token();
+        if (stored) xhr.setRequestHeader("Authorization", `Bearer ${stored}`);
+      }
+      if (typeof onProgress === "function") {
+        xhr.upload.onprogress = (event) => {
+          if (!event.lengthComputable) return;
+          onProgress(Math.round((event.loaded / event.total) * 100));
+        };
+      }
+      if (signal) {
+        if (signal.aborted) {
+          reject(new ApiError("Upload cancelled", 0, "aborted"));
+          return;
+        }
+        signal.addEventListener("abort", () => xhr.abort(), { once: true });
+      }
+      xhr.onload = () => {
+        let payload = null;
+        try {
+          payload = JSON.parse(xhr.responseText);
+        } catch (_error) {
+          payload = null;
+        }
+        if (xhr.status >= 200 && xhr.status < 300 && !(payload && payload.success === false)) {
+          resolve({
+            data: payload ? payload.data : null,
+            meta: payload ? payload.meta : null,
+            status: xhr.status
+          });
+          return;
+        }
+        if (xhr.status === 401 && auth && !path.includes("/auth/login")) {
+          clearSession();
+          window.dispatchEvent(new CustomEvent("nexus:unauthorized"));
+        }
+        const error = (payload && payload.error) || {};
+        reject(
+          new ApiError(
+            error.message || `Request failed (${xhr.status})`,
+            xhr.status,
+            error.code || "request_failed",
+            error.details
+          )
+        );
+      };
+      xhr.onerror = () => reject(new ApiError("Unable to reach the server", 0, "network_error"));
+      xhr.onabort = () => reject(new ApiError("Upload cancelled", 0, "aborted"));
+      xhr.send(formData);
+    });
+  }
+
   async function refreshSession() {
     const refresh = localStorage.getItem(REFRESH_KEY);
     if (!refresh) throw new ApiError("No refresh token", 401, "unauthorized");
@@ -122,6 +179,7 @@
     TOKEN_KEY,
     REFRESH_KEY,
     request,
+    upload,
     get: (path, options) => request(path, { ...options, method: "GET" }),
     post: (path, body, options) => request(path, { ...options, method: "POST", body }),
     put: (path, body, options) => request(path, { ...options, method: "PUT", body }),

@@ -66,6 +66,7 @@ def validate_upload(
     *,
     allowed_extensions: set[str],
     max_bytes: int,
+    allowed_mime_types: set[str] | None = None,
 ) -> str:
     if file is None or not file.filename:
         raise ApiError("A file is required", status_code=400, code="validation_error")
@@ -81,6 +82,15 @@ def validate_upload(
             status_code=415,
             code="unsupported_media_type",
             details={"allowed": sorted(allowed_extensions)},
+        )
+
+    mime_type = (file.mimetype or "").lower()
+    if allowed_mime_types is not None and mime_type not in allowed_mime_types:
+        raise ApiError(
+            f"File MIME type {mime_type or 'unknown'} is not allowed",
+            status_code=415,
+            code="unsupported_media_type",
+            details={"allowed": sorted(allowed_mime_types)},
         )
 
     header = file.stream.read(16)
@@ -118,9 +128,13 @@ def save_upload(
     subdir: str = "media",
     allowed_extensions: set[str],
     max_bytes: int,
+    allowed_mime_types: set[str] | None = None,
 ) -> dict:
     extension = validate_upload(
-        file, allowed_extensions=allowed_extensions, max_bytes=max_bytes
+        file,
+        allowed_extensions=allowed_extensions,
+        max_bytes=max_bytes,
+        allowed_mime_types=allowed_mime_types,
     )
     original = secure_filename(file.filename)
     stem = Path(original).stem[:60] or "file"

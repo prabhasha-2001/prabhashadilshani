@@ -8,7 +8,7 @@ from flask import Blueprint, current_app, g, request
 from app.extensions import db
 from app.middleware.audit import log_activity
 from app.middleware.auth import auth_required
-from app.models import MediaFile, ResumeVersion
+from app.models import MediaFile, Profile, ResumeVersion
 from app.schemas import ResumeSchema
 from app.utils.errors import ApiError, NotFoundError
 from app.utils.pagination import apply_sort, paginate_query, parse_pagination
@@ -19,10 +19,23 @@ bp = Blueprint("media", __name__, url_prefix="/admin")
 
 IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif"}
 DOCUMENT_EXTENSIONS = {"pdf"}
+RESUME_MAX_BYTES = 5 * 1024 * 1024
+RESUME_MIME_TYPES = {"application/pdf", "application/x-pdf", "application/octet-stream", ""}
 
 
 def _max_bytes() -> int:
     return current_app.config["MAX_CONTENT_LENGTH"]
+
+
+def _save_resume_upload(file) -> dict:
+    return save_upload(
+        file,
+        base_dir=current_app.config["UPLOAD_DIR"],
+        subdir="resumes",
+        allowed_extensions=DOCUMENT_EXTENSIONS,
+        max_bytes=RESUME_MAX_BYTES,
+        allowed_mime_types=RESUME_MIME_TYPES,
+    )
 
 
 @bp.post("/media")
@@ -51,6 +64,34 @@ def upload_media():
     db.session.commit()
     log_activity(g.current_user.id, "media.upload", entity_type="media", entity_id=media.id)
     return success_response(media.to_dict(), status=201)
+
+
+@bp.post("/profile/resume")
+@auth_required("editor")
+def upload_profile_resume():
+    profile = Profile.query.first()
+    if profile is None:
+        raise NotFoundError("Profile not found")
+    file = request.files.get("file")
+    if file is None:
+        raise ApiError("A PDF file is required", status_code=400, code="validation_error")
+
+    previous_url = profile.resume_url
+    saved = _save_resume_upload(file)
+    profile.resume_url = saved["url"]
+    db.session.commit()
+    log_activity(g.current_user.id, "resume.profile_upload", entity_type="profile", entity_id=profile.id)
+    return success_response(
+        {
+            "url": saved["url"],
+            "filename": saved["original_filename"],
+            "stored_filename": saved["filename"],
+            "size_bytes": saved["size_bytes"],
+            "previous_url": previous_url,
+            "profile": profile.to_dict(),
+        },
+        status=201,
+    )
 
 
 @bp.get("/media")
@@ -99,10 +140,7 @@ def create_resume():
     if file is None:
         raise ApiError("A PDF file is required", status_code=400, code="validation_error")
 
-    saved = save_upload(
-        file, base_dir=current_app.config["UPLOAD_DIR"], subdir="resumes",
-        allowed_extensions=DOCUMENT_EXTENSIONS, max_bytes=_max_bytes(),
-    )
+    saved = _save_resume_upload(file)
     resume = ResumeVersion(
         label=payload["label"],
         role_family=payload.get("role_family"),
